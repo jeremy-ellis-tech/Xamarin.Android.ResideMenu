@@ -1,4 +1,3 @@
-using Android;
 using Android.Animation;
 using Android.App;
 using Android.Content;
@@ -10,34 +9,33 @@ using Android.Views.Animations;
 using Android.Widget;
 using System;
 using System.Collections.Generic;
-using Orientation = Android.Content.Res.Orientation;
 using JavaObject = Java.Lang.Object;
+using Orientation = Android.Content.Res.Orientation;
 
 namespace AndroidResideMenu
 {
     public class ResideMenu : FrameLayout
     {
-        public static int DIRECTION_LEFT = 0;
-        public static int DIRECTION_RIGHT = 1;
-
         public enum Direction
         {
             Left,
             Right
         }
 
+        private enum PressedState
+        {
+            Horizontal = 2,
+            Down = 3,
+            Done = 4,
+            Vertical = 5
+        }
 
-        private static int PRESSED_MOVE_HORIZONTAL = 2;
-        private static int PRESSED_DOWN = 3;
-        private static int PRESSED_DONE = 4;
-        private static int PRESSED_MOVE_VERTICAL = 5;
-
-        private ImageView imageViewShadow;
-        private ImageView imageViewBackground;
-        private LinearLayout layoutLeftMenu;
-        private LinearLayout layoutRightMenu;
-        private ScrollView scrollViewLeftMenu;
-        private ScrollView scrollViewRightMenu;
+        private readonly ImageView _imageViewShadow;
+        private readonly ImageView _imageViewBackground;
+        private readonly LinearLayout _layoutLeftMenu;
+        private readonly LinearLayout _layoutRightMenu;
+        private readonly ScrollView _scrollViewLeftMenu;
+        private readonly ScrollView _scrollViewRightMenu;
         private ScrollView scrollViewMenu;
         /** Current attaching activity. */
         private Activity activity;
@@ -57,7 +55,7 @@ namespace AndroidResideMenu
         private float lastRawX;
         private bool _isInIgnoredView;
         private global::AndroidResideMenu.ResideMenu.Direction scaleDirection = Direction.Left;
-        private int pressedState = PRESSED_DOWN;
+        private PressedState pressedState = PressedState.Down;
         private List<Direction> disabledSwipeDirection = new List<Direction>();
         // Valid scale factor is between 0.0f and 1.0f.
         private float mScaleValue = 0.5f;
@@ -67,19 +65,14 @@ namespace AndroidResideMenu
         public ResideMenu(Context context)
             : base(context)
         {
-            initViews(context);
-        }
-
-        private void initViews(Context context)
-        {
             LayoutInflater inflater = context.GetSystemService(Context.LayoutInflaterService) as LayoutInflater;
             inflater.Inflate(global::ResideMenu.Resource.Layout.residemenu, this);
-            scrollViewLeftMenu = FindViewById<ScrollView>(global::ResideMenu.Resource.Id.sv_left_menu);
-            scrollViewRightMenu = FindViewById<ScrollView>(global::ResideMenu.Resource.Id.sv_right_menu);
-            imageViewShadow = FindViewById<ImageView>(global::ResideMenu.Resource.Id.iv_shadow);
-            layoutLeftMenu = FindViewById<LinearLayout>(global::ResideMenu.Resource.Id.layout_left_menu);
-            layoutRightMenu = FindViewById<LinearLayout>(global::ResideMenu.Resource.Id.layout_right_menu);
-            imageViewBackground = FindViewById<ImageView>(global::ResideMenu.Resource.Id.iv_background);
+            _scrollViewLeftMenu = FindViewById<ScrollView>(global::ResideMenu.Resource.Id.sv_left_menu);
+            _scrollViewRightMenu = FindViewById<ScrollView>(global::ResideMenu.Resource.Id.sv_right_menu);
+            _imageViewShadow = FindViewById<ImageView>(global::ResideMenu.Resource.Id.iv_shadow);
+            _layoutLeftMenu = FindViewById<LinearLayout>(global::ResideMenu.Resource.Id.layout_left_menu);
+            _layoutRightMenu = FindViewById<LinearLayout>(global::ResideMenu.Resource.Id.layout_right_menu);
+            _imageViewBackground = FindViewById<ImageView>(global::ResideMenu.Resource.Id.iv_background);
 
             _clickListener = new ClickListener(this);
             _animatorListener = new AnimatorListener(this);
@@ -92,14 +85,7 @@ namespace AndroidResideMenu
             return true;
         }
 
-        public void attachToActivity(Activity activity)
-        {
-            initValue(activity);
-            SetShadowAdjustScaleXByOrientation();
-            viewDecor.AddView(this, 0);
-        }
-
-        private void initValue(Activity activity)
+        public void AttachToActivity(Activity activity)
         {
             this.activity = activity;
             leftMenuItems = new List<ResideMenuItem>();
@@ -113,9 +99,11 @@ namespace AndroidResideMenu
             viewActivity.Content = mContent;
             AddView(viewActivity);
 
-            ViewGroup parent = scrollViewLeftMenu.Parent as ViewGroup;
-            parent.RemoveView(scrollViewLeftMenu);
-            parent.RemoveView(scrollViewRightMenu);
+            ViewGroup parent = _scrollViewLeftMenu.Parent as ViewGroup;
+            parent.RemoveView(_scrollViewLeftMenu);
+            parent.RemoveView(_scrollViewRightMenu);
+            SetShadowAdjustScaleXByOrientation();
+            viewDecor.AddView(this, 0);
         }
 
         private void SetShadowAdjustScaleXByOrientation()
@@ -135,85 +123,81 @@ namespace AndroidResideMenu
 
         public void setBackground(int imageResource)
         {
-            imageViewBackground.SetImageResource(imageResource);
+            _imageViewBackground.SetImageResource(imageResource);
         }
 
         public void setShadowVisible(bool isVisible)
         {
             if (isVisible)
-                imageViewShadow.SetBackgroundResource(global::ResideMenu.Resource.Drawable.shadow);
+                _imageViewShadow.SetBackgroundResource(global::ResideMenu.Resource.Drawable.shadow);
             else
-                imageViewShadow.SetBackgroundResource(0);
+                _imageViewShadow.SetBackgroundResource(0);
         }
 
-        [Obsolete]
-        public void addMenuItem(ResideMenuItem menuItem)
+        public void addMenuItem(ResideMenuItem menuItem, Direction direction)
         {
-            this.leftMenuItems.Add(menuItem);
-            layoutLeftMenu.AddView(menuItem);
-        }
-
-        public void addMenuItem(ResideMenuItem menuItem, int direction)
-        {
-            if (direction == DIRECTION_LEFT)
+            switch (direction)
             {
-                this.leftMenuItems.Add(menuItem);
-                layoutLeftMenu.AddView(menuItem);
-            }
-            else
-            {
-                this.rightMenuItems.Add(menuItem);
-                layoutRightMenu.AddView(menuItem);
+                case Direction.Left:
+                    this.leftMenuItems.Add(menuItem);
+                _layoutLeftMenu.AddView(menuItem);
+                    break;
+                case Direction.Right:
+                    this.rightMenuItems.Add(menuItem);
+                _layoutRightMenu.AddView(menuItem);
+                    break;
+                default:
+                    throw new Exception();
             }
         }
 
-        [Obsolete("Will be removed from v2.0")]
-        public void setMenuItems(List<ResideMenuItem> menuItems)
+        public void setMenuItems(List<ResideMenuItem> menuItems, Direction direction)
         {
-            this.leftMenuItems = menuItems;
-            rebuildMenu();
-        }
+            switch (direction)
+            {
+                case Direction.Left:
+                    this.leftMenuItems = menuItems;
+                    break;
+                case Direction.Right:
+                    this.rightMenuItems = menuItems;
+                    break;
+                default:
+                    break;
+            }
 
-        public void setMenuItems(List<ResideMenuItem> menuItems, int direction)
-        {
-            if (direction == DIRECTION_LEFT)
-                this.leftMenuItems = menuItems;
-            else
-                this.rightMenuItems = menuItems;
             rebuildMenu();
         }
 
         private void rebuildMenu()
         {
-            layoutLeftMenu.RemoveAllViews();
-            layoutRightMenu.RemoveAllViews();
+            _layoutLeftMenu.RemoveAllViews();
+            _layoutRightMenu.RemoveAllViews();
             foreach (ResideMenuItem leftMenuItem in leftMenuItems)
-                layoutLeftMenu.AddView(leftMenuItem);
+                _layoutLeftMenu.AddView(leftMenuItem);
             foreach (ResideMenuItem rightMenuItem in rightMenuItems)
-                layoutRightMenu.AddView(rightMenuItem);
+                _layoutRightMenu.AddView(rightMenuItem);
         }
 
-        [Obsolete("Will be removed v2.0")]
-        public List<ResideMenuItem> getMenuItems()
+        public List<ResideMenuItem> GetMenuItems(Direction direction)
         {
-            return leftMenuItems;
+            switch (direction)
+            {
+                case Direction.Left:
+                    return leftMenuItems;
+                case Direction.Right:
+                    return rightMenuItems;
+                default:
+                    throw new Exception();
+            }
         }
 
-        public List<ResideMenuItem> getMenuItems(int direction)
-        {
-            if (direction == DIRECTION_LEFT)
-                return leftMenuItems;
-            else
-                return rightMenuItems;
-        }
-
-        public void setMenuListener(IOnMenuListener menuListener)
+        public void SetMenuListener(IOnMenuListener menuListener)
         {
             this.menuListener = menuListener;
         }
 
 
-        public IOnMenuListener getMenuListener()
+        public IOnMenuListener GetMenuListener()
         {
             return menuListener;
         }
@@ -223,9 +207,9 @@ namespace AndroidResideMenu
             SetScaleDirection(direction);
 
             isOpened = true;
-            AnimatorSet scaleDown_activity = buildScaleDownAnimation(viewActivity, mScaleValue, mScaleValue);
-            AnimatorSet scaleDown_shadow = buildScaleDownAnimation(imageViewShadow, mScaleValue + shadowAdjustScaleX, mScaleValue + shadowAdjustScaleY);
-            AnimatorSet alpha_menu = buildMenuAnimation(scrollViewMenu, 1.0f);
+            AnimatorSet scaleDown_activity = BuildScaleDownAnimation(viewActivity, mScaleValue, mScaleValue);
+            AnimatorSet scaleDown_shadow = BuildScaleDownAnimation(_imageViewShadow, mScaleValue + shadowAdjustScaleX, mScaleValue + shadowAdjustScaleY);
+            AnimatorSet alpha_menu = BuildMenuAnimation(scrollViewMenu, 1.0f);
             scaleDown_shadow.AddListener(_animatorListener);
             scaleDown_activity.PlayTogether(scaleDown_shadow);
             scaleDown_activity.PlayTogether(alpha_menu);
@@ -235,27 +219,21 @@ namespace AndroidResideMenu
         public void CloseMenu()
         {
             isOpened = false;
-            AnimatorSet scaleUp_activity = buildScaleUpAnimation(viewActivity, 1.0f, 1.0f);
-            AnimatorSet scaleUp_shadow = buildScaleUpAnimation(imageViewShadow, 1.0f, 1.0f);
-            AnimatorSet alpha_menu = buildMenuAnimation(scrollViewMenu, 0.0f);
+            AnimatorSet scaleUp_activity = BuildScaleUpAnimation(viewActivity, 1.0f, 1.0f);
+            AnimatorSet scaleUp_shadow = BuildScaleUpAnimation(_imageViewShadow, 1.0f, 1.0f);
+            AnimatorSet alpha_menu = BuildMenuAnimation(scrollViewMenu, 0.0f);
             scaleUp_activity.AddListener(_animatorListener);
             scaleUp_activity.PlayTogether(scaleUp_shadow);
             scaleUp_activity.PlayTogether(alpha_menu);
             scaleUp_activity.Start();
         }
 
-        [Obsolete("Will be removed in v2.0")]
-        public void setDirectionDisable(Direction direction)
+        public void SetSwipeDirectionDisable(Direction direction)
         {
             disabledSwipeDirection.Add(direction);
         }
 
-        public void setSwipeDirectionDisable(Direction direction)
-        {
-            disabledSwipeDirection.Add(direction);
-        }
-
-        private bool isInDisableDirection(Direction direction)
+        private bool IsInDisableDirection(Direction direction)
         {
             return disabledSwipeDirection.Contains(direction);
         }
@@ -263,18 +241,18 @@ namespace AndroidResideMenu
         private void SetScaleDirection(Direction direction)
         {
 
-            int screenWidth = getScreenWidth();
+            int screenWidth = GetScreenWidth();
             float pivotX;
-            float pivotY = getScreenHeight() * 0.5f;
+            float pivotY = GetScreenHeight() * 0.5f;
 
             switch (direction)
             {
                 case Direction.Left:
-                    scrollViewMenu = scrollViewLeftMenu;
+                    scrollViewMenu = _scrollViewLeftMenu;
                     pivotX = screenWidth * 1.5f;
                     break;
                 case Direction.Right:
-                    scrollViewMenu = scrollViewRightMenu;
+                    scrollViewMenu = _scrollViewRightMenu;
                     pivotX = screenWidth * -0.5f;
                     break;
                 default:
@@ -283,8 +261,8 @@ namespace AndroidResideMenu
 
             viewActivity.PivotX = pivotX;
             viewActivity.PivotY = pivotY;
-            imageViewShadow.PivotX = pivotX;
-            imageViewShadow.PivotY = pivotY;
+            _imageViewShadow.PivotX = pivotX;
+            _imageViewShadow.PivotY = pivotY;
             scaleDirection = direction;
         }
 
@@ -331,7 +309,7 @@ namespace AndroidResideMenu
 
                     if (_outerInstance.menuListener != null)
                     {
-                        _outerInstance.menuListener.openMenu();
+                        _outerInstance.menuListener.OpenMenu();
                     }
                 }
             }
@@ -347,17 +325,17 @@ namespace AndroidResideMenu
                 {
                     _outerInstance.viewActivity.IsTouchDisabled = false;
                     _outerInstance.viewActivity.SetOnClickListener(null);
-                    _outerInstance.HideScrollViewMenu(_outerInstance.scrollViewLeftMenu);
-                    _outerInstance.HideScrollViewMenu(_outerInstance.scrollViewRightMenu);
+                    _outerInstance.HideScrollViewMenu(_outerInstance._scrollViewLeftMenu);
+                    _outerInstance.HideScrollViewMenu(_outerInstance._scrollViewRightMenu);
                     if (_outerInstance.menuListener != null)
                     {
-                        _outerInstance.menuListener.closeMenu();
+                        _outerInstance.menuListener.CloseMenu();
                     }
                 }
             }
         }
 
-        private AnimatorSet buildScaleDownAnimation(View target, float targetScaleX, float targetScaleY)
+        private AnimatorSet BuildScaleDownAnimation(View target, float targetScaleX, float targetScaleY)
         {
 
             AnimatorSet scaleDown = new AnimatorSet();
@@ -368,7 +346,7 @@ namespace AndroidResideMenu
             return scaleDown;
         }
 
-        private AnimatorSet buildScaleUpAnimation(View target, float targetScaleX, float targetScaleY)
+        private AnimatorSet BuildScaleUpAnimation(View target, float targetScaleX, float targetScaleY)
         {
 
             AnimatorSet scaleUp = new AnimatorSet();
@@ -377,7 +355,7 @@ namespace AndroidResideMenu
             return scaleUp;
         }
 
-        private AnimatorSet buildMenuAnimation(View target, float alpha)
+        private AnimatorSet BuildMenuAnimation(View target, float alpha)
         {
 
             AnimatorSet alphaAnimation = new AnimatorSet();
@@ -391,24 +369,17 @@ namespace AndroidResideMenu
             ignoredViews.Add(v);
         }
 
-        /**
-         * Remove a view from ignored views;
-         * @param v
-         */
-        public void removeIgnoredView(View v)
+        public void RemoveIgnoredView(View v)
         {
             ignoredViews.Remove(v);
         }
 
-        /**
-         * Clear the ignored view list;
-         */
-        public void clearIgnoredViewList()
+        public void ClearIgnoredViewList()
         {
             ignoredViews.Clear();
         }
 
-        private bool isInIgnoredView(MotionEvent ev)
+        private bool IsInIgnoredView(MotionEvent ev)
         {
             Rect rect = new Rect();
             foreach (View v in ignoredViews)
@@ -430,7 +401,7 @@ namespace AndroidResideMenu
 
         private float GetTargetScale(float currentRawX)
         {
-            float scaleFloatX = ((currentRawX - lastRawX) / getScreenWidth()) * 0.75f;
+            float scaleFloatX = ((currentRawX - lastRawX) / GetScreenWidth()) * 0.75f;
             scaleFloatX = scaleDirection == Direction.Right ? -scaleFloatX : scaleFloatX;
 
             float targetScale = viewActivity.ScaleX - scaleFloatX;
@@ -452,35 +423,34 @@ namespace AndroidResideMenu
                 case MotionEventActions.Down:
                     lastActionDownX = ev.GetX();
                     lastActionDownY = ev.GetY();
-                    _isInIgnoredView = isInIgnoredView(ev) && !isOpened;
-                    pressedState = PRESSED_DOWN;
+                    _isInIgnoredView = IsInIgnoredView(ev) && !isOpened;
+                    pressedState = PressedState.Down;
                     break;
 
                 case MotionEventActions.Move:
-                    if (_isInIgnoredView || isInDisableDirection(scaleDirection))
+                    if (_isInIgnoredView || IsInDisableDirection(scaleDirection))
                         break;
 
-                    if (pressedState != PRESSED_DOWN &&
-                            pressedState != PRESSED_MOVE_HORIZONTAL)
+                    if (pressedState != PressedState.Down && pressedState != PressedState.Horizontal)
                         break;
 
                     int xOffset = (int)(ev.GetX() - lastActionDownX);
                     int yOffset = (int)(ev.GetY() - lastActionDownY);
 
-                    if (pressedState == PRESSED_DOWN)
+                    if (pressedState == PressedState.Down)
                     {
                         if (yOffset > 25 || yOffset < -25)
                         {
-                            pressedState = PRESSED_MOVE_VERTICAL;
+                            pressedState = PressedState.Vertical;
                             break;
                         }
                         if (xOffset < -50 || xOffset > 50)
                         {
-                            pressedState = PRESSED_MOVE_HORIZONTAL;
+                            pressedState = PressedState.Horizontal;
                             ev.Action = MotionEventActions.Cancel;
                         }
                     }
-                    else if (pressedState == PRESSED_MOVE_HORIZONTAL)
+                    else if (pressedState == PressedState.Horizontal)
                     {
                         if (currentActivityScaleX < 0.95)
                             ShowScrollViewMenu(scrollViewMenu);
@@ -488,8 +458,8 @@ namespace AndroidResideMenu
                         float targetScale = GetTargetScale(ev.RawX);
                         viewActivity.ScaleX = targetScale;
                         viewActivity.ScaleY = targetScale;
-                        imageViewShadow.ScaleX = targetScale + shadowAdjustScaleX;
-                        imageViewShadow.ScaleY = targetScale + shadowAdjustScaleY;
+                        _imageViewShadow.ScaleX = targetScale + shadowAdjustScaleX;
+                        _imageViewShadow.ScaleY = targetScale + shadowAdjustScaleY;
                         scrollViewMenu.Alpha = (1 - targetScale) * 2.0F;
 
                         lastRawX = ev.RawX;
@@ -501,9 +471,9 @@ namespace AndroidResideMenu
                 case MotionEventActions.Up:
 
                     if (_isInIgnoredView) break;
-                    if (pressedState != PRESSED_MOVE_HORIZONTAL) break;
+                    if (pressedState != PressedState.Horizontal) break;
 
-                    pressedState = PRESSED_DONE;
+                    pressedState = PressedState.Done;
                     if (isOpened)
                     {
                         if (currentActivityScaleX > 0.56f)
@@ -530,27 +500,27 @@ namespace AndroidResideMenu
             return base.DispatchTouchEvent(ev);
         }
 
-        public int getScreenHeight()
+        public int GetScreenHeight()
         {
             activity.WindowManager.DefaultDisplay.GetMetrics(displayMetrics);
             return displayMetrics.HeightPixels;
         }
 
-        public int getScreenWidth()
+        public int GetScreenWidth()
         {
             activity.WindowManager.DefaultDisplay.GetMetrics(displayMetrics);
             return displayMetrics.WidthPixels;
         }
 
-        public void setScaleValue(float scaleValue)
+        public void SetScaleValue(float scaleValue)
         {
             this.mScaleValue = scaleValue;
         }
 
         public interface IOnMenuListener
         {
-            void openMenu();
-            void closeMenu();
+            void OpenMenu();
+            void CloseMenu();
         }
 
         private void ShowScrollViewMenu(ScrollView scrollViewMenu)

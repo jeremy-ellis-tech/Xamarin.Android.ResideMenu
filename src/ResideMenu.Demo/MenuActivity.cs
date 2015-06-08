@@ -34,9 +34,9 @@ namespace ResideMenu.Demo
         {
             ResideMenu = new global::AndroidResideMenu.ResideMenu(this);
             ResideMenu.setBackground(Resource.Drawable.menu_background);
-            ResideMenu.attachToActivity(this);
-            ResideMenu.setMenuListener(this);
-            ResideMenu.setScaleValue(0.6F);
+            ResideMenu.AttachToActivity(this);
+            ResideMenu.SetMenuListener(this);
+            ResideMenu.SetScaleValue(0.6F);
 
             // create menu items;
             _itemHome = new ResideMenuItem(this, Resource.Drawable.icon_home, "Home");
@@ -49,10 +49,10 @@ namespace ResideMenu.Demo
             _itemCalendar.SetOnClickListener(this);
             _itemSettings.SetOnClickListener(this);
 
-            ResideMenu.addMenuItem(_itemHome, global::AndroidResideMenu.ResideMenu.DIRECTION_LEFT);
-            ResideMenu.addMenuItem(_itemProfile, global::AndroidResideMenu.ResideMenu.DIRECTION_LEFT);
-            ResideMenu.addMenuItem(_itemCalendar, global::AndroidResideMenu.ResideMenu.DIRECTION_RIGHT);
-            ResideMenu.addMenuItem(_itemSettings, global::AndroidResideMenu.ResideMenu.DIRECTION_RIGHT);
+            ResideMenu.addMenuItem(_itemHome, global::AndroidResideMenu.ResideMenu.Direction.Left);
+            ResideMenu.addMenuItem(_itemProfile, global::AndroidResideMenu.ResideMenu.Direction.Left);
+            ResideMenu.addMenuItem(_itemCalendar, global::AndroidResideMenu.ResideMenu.Direction.Right);
+            ResideMenu.addMenuItem(_itemSettings, global::AndroidResideMenu.ResideMenu.Direction.Right);
 
             // You can disable a direction by setting ->
             // resideMenu.setSwipeDirectionDisable(ResideMenu.DIRECTION_RIGHT);
@@ -90,7 +90,7 @@ namespace ResideMenu.Demo
 
         private void ChangeFragment(Fragment targetFragment)
         {
-            ResideMenu.clearIgnoredViewList();
+            ResideMenu.ClearIgnoredViewList();
 
             SupportFragmentManager
                     .BeginTransaction()
@@ -99,12 +99,12 @@ namespace ResideMenu.Demo
                     .Commit();
         }
 
-        public void openMenu()
+        public void OpenMenu()
         {
             Toast.MakeText(this, "Menu is opened!", ToastLength.Short).Show();
         }
 
-        public void closeMenu()
+        public void CloseMenu()
         {
             Toast.MakeText(this, "Menu is closed!", ToastLength.Short).Show();
         }
