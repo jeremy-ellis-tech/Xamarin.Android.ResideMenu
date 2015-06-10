@@ -4,12 +4,13 @@ using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
 using AndroidResideMenu;
+using System;
 using Fragment = Android.Support.V4.App.Fragment;
 
 namespace ResideMenu.Demo
 {
     [Activity(MainLauncher = true, Label = "@string/app_name", Theme = "@android:style/Theme.Light.NoTitleBar")]
-    public class MenuActivity : FragmentActivity, View.IOnClickListener, global::AndroidResideMenu.ResideMenu.IOnMenuListener
+    public class MenuActivity : FragmentActivity, View.IOnClickListener//, global::AndroidResideMenu.ResideMenu.IOnMenuListener
     {
 
         public global::AndroidResideMenu.ResideMenu ResideMenu { get; private set; }
@@ -35,7 +36,13 @@ namespace ResideMenu.Demo
             ResideMenu = new global::AndroidResideMenu.ResideMenu(this);
             ResideMenu.SetBackground(Resource.Drawable.menu_background);
             ResideMenu.AttachToActivity(this);
-            ResideMenu.SetMenuListener(this);
+
+            //Now done with MenuOpened/Closed handlers!
+            //ResideMenu.SetMenuListener(this);
+
+            ResideMenu.MenuOpened += OnMenuOpened;
+            ResideMenu.MenuClosed += OnMenuClosed;
+
             ResideMenu.SetScaleValue(0.6F);
 
             // create menu items;
@@ -99,14 +106,25 @@ namespace ResideMenu.Demo
                     .Commit();
         }
 
-        public void OpenMenu()
+        private void OnMenuOpened(object sender, EventArgs e)
         {
             Toast.MakeText(this, "Menu is opened!", ToastLength.Short).Show();
         }
 
-        public void CloseMenu()
+        private void OnMenuClosed(object sender, EventArgs e)
         {
             Toast.MakeText(this, "Menu is closed!", ToastLength.Short).Show();
         }
+
+        //Old interface callbacks
+        //public void OpenMenu()
+        //{
+        //    Toast.MakeText(this, "Menu is opened!", ToastLength.Short).Show();
+        //}
+
+        //public void CloseMenu()
+        //{
+        //    Toast.MakeText(this, "Menu is closed!", ToastLength.Short).Show();
+        //}
     }
 }

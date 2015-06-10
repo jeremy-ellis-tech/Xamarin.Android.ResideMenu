@@ -17,12 +17,12 @@ Currently a near direct translation of SpecialCyCi's repository. See TODO to see
 
 ## TODO ##
 
-* <del>Remove obsolete methods</del>
-* Replace call-back interfaces with events (in progress)
-* Replace Java int const pattern with .NET enums (in progress)
-* Refactor (in progress)
 * Support view layout attributes
 * Support custom menu item layouts
+* <del>Remove obsolete methods</del>
+* <del>Replace call-back interfaces with events </del>
+* <del>Replace Java int const pattern with .NET enums </del>
+* <del>Refactor</del>
 
 ## License ##
 Provided under the MIT license. See LICENSE for details.

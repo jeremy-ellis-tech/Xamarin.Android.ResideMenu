@@ -16,6 +16,9 @@ namespace AndroidResideMenu
 {
     public class ResideMenu : FrameLayout
     {
+        public event EventHandler MenuOpened;
+        public event EventHandler MenuClosed;
+
         private readonly ImageView _imageViewShadow;
         private readonly ImageView _imageViewBackground;
         private readonly LinearLayout _layoutLeftMenu;
@@ -304,6 +307,13 @@ namespace AndroidResideMenu
                     {
                         _outerInstance._menuListener.OpenMenu();
                     }
+
+                    var handler = _outerInstance.MenuOpened;
+
+                    if(handler != null)
+                    {
+                        handler(_outerInstance, EventArgs.Empty);
+                    }
                 }
             }
 
@@ -320,9 +330,17 @@ namespace AndroidResideMenu
                     _outerInstance._viewActivity.SetOnClickListener(null);
                     _outerInstance.HideScrollViewMenu(_outerInstance._scrollViewLeftMenu);
                     _outerInstance.HideScrollViewMenu(_outerInstance._scrollViewRightMenu);
+
                     if (_outerInstance._menuListener != null)
                     {
                         _outerInstance._menuListener.CloseMenu();
+                    }
+
+                    var handler = _outerInstance.MenuClosed;
+
+                    if (handler != null)
+                    {
+                        handler(_outerInstance, EventArgs.Empty);
                     }
                 }
             }
