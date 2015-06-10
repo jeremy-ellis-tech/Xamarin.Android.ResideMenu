@@ -1,4 +1,3 @@
-using Android;
 using Android.Content;
 using Android.Views;
 using Android.Widget;
@@ -10,19 +9,22 @@ namespace AndroidResideMenu
         private ImageView _icon;
         private TextView _title;
 
-        public ResideMenuItem(Context context) : base(context)
+        public ResideMenuItem(Context context)
+            : base(context)
         {
             Init(context);
         }
 
-        public ResideMenuItem(Context context, int icon, int title) : base(context)
+        public ResideMenuItem(Context context, int icon, int title)
+            : base(context)
         {
             Init(context);
             _title.SetText(title);
             _icon.SetImageResource(icon);
         }
 
-        public ResideMenuItem(Context context, int icon, string title) : base(context)
+        public ResideMenuItem(Context context, int icon, string title)
+            : base(context)
         {
             Init(context);
             _title.Text = title;

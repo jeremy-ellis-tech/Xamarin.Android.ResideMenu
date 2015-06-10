@@ -33,7 +33,7 @@ namespace ResideMenu.Demo
         private void SetupMenu()
         {
             ResideMenu = new global::AndroidResideMenu.ResideMenu(this);
-            ResideMenu.setBackground(Resource.Drawable.menu_background);
+            ResideMenu.SetBackground(Resource.Drawable.menu_background);
             ResideMenu.AttachToActivity(this);
             ResideMenu.SetMenuListener(this);
             ResideMenu.SetScaleValue(0.6F);
@@ -49,10 +49,10 @@ namespace ResideMenu.Demo
             _itemCalendar.SetOnClickListener(this);
             _itemSettings.SetOnClickListener(this);
 
-            ResideMenu.addMenuItem(_itemHome, global::AndroidResideMenu.ResideMenu.Direction.Left);
-            ResideMenu.addMenuItem(_itemProfile, global::AndroidResideMenu.ResideMenu.Direction.Left);
-            ResideMenu.addMenuItem(_itemCalendar, global::AndroidResideMenu.ResideMenu.Direction.Right);
-            ResideMenu.addMenuItem(_itemSettings, global::AndroidResideMenu.ResideMenu.Direction.Right);
+            ResideMenu.AddMenuItem(_itemHome, global::AndroidResideMenu.ResideMenu.Direction.Left);
+            ResideMenu.AddMenuItem(_itemProfile, global::AndroidResideMenu.ResideMenu.Direction.Left);
+            ResideMenu.AddMenuItem(_itemCalendar, global::AndroidResideMenu.ResideMenu.Direction.Right);
+            ResideMenu.AddMenuItem(_itemSettings, global::AndroidResideMenu.ResideMenu.Direction.Right);
 
             // You can disable a direction by setting ->
             // resideMenu.setSwipeDirectionDisable(ResideMenu.DIRECTION_RIGHT);
